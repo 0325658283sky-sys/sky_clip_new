@@ -7,7 +7,7 @@
 - 테마 근거: [research/쇼츠_트렌드_조사.md](research/쇼츠_트렌드_조사.md)
 - 화면 기준: [SkyCut 목업](https://claude.ai/artifact/EiJSSYjaDesPGanT1k87iD)
 
-**현재 단계: M0 (뼈대 + 테마 샘플)**
+**현재 단계: M1 (하이라이트 엔진)** — M0(뼈대 + 테마 샘플) 완료
 
 ---
 
@@ -17,12 +17,19 @@
 npm install
 python -m venv .venv
 .venv/Scripts/python -m pip install pydantic datamodel-code-generator
+.venv/Scripts/python -m pip install -e apps/worker
 ```
+
+API 키는 저장소 루트 `.env`에 넣는다 ([apps/worker/README.md](apps/worker/README.md) 참고). 키가 없어도 `--offline`으로 워커를 돌려 볼 수 있다.
 
 ## 자주 쓰는 명령
 
 ```bash
 npm test                 # core 단위 테스트 (M0 Gate a~f)
+```
+
+```bash
+cd apps/worker && ../../.venv/Scripts/python -m pytest -q    # 워커 테스트 (M1)
 ```
 
 ```bash
@@ -63,6 +70,7 @@ npx tsx tools/compare-preview-export.ts # 미리보기 vs 최종 렌더 SSIM 비
 | `packages/core` | `resolve()`, 시간 매핑, 자막 묶기 — 순수 TS |
 | `packages/templates` | 테마 A(예능 블랙)·B(게시물 화이트) |
 | `apps/renderer` | Remotion 컴포지션 + 렌더 스크립트 |
+| `apps/worker` | 대본·하이라이트 추출·품질 평가 ([README](apps/worker/README.md)) |
 | `fixtures/` | 손으로 만든 샘플 Project JSON |
 | `out/` | 렌더 결과 (커밋하지 않음) |
 
