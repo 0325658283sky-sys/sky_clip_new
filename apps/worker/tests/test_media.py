@@ -14,7 +14,12 @@ import pytest
 from skycut_worker.media import MediaStore, ingest
 from skycut_worker.media.ffmpeg import probe, require_video, waveform_peaks
 from skycut_worker.media.store import PROXY, SOURCE, WAV, asset_id_for_file, asset_id_for_youtube
-from skycut_worker.media.youtube import _classify, video_id_from_url
+from skycut_worker.media.youtube import (
+    _classify,
+    _clear_leftovers,
+    _finished_file,
+    video_id_from_url,
+)
 
 needs_ffmpeg = pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg가 없습니다")
 
@@ -77,6 +82,41 @@ def test_실패_사유를_구분한다(stderr: str, reason: str) -> None:
     err = _classify(stderr)
     assert err.reason == reason
     assert str(err)  # 사용자에게 보여 줄 말이 있어야 한다
+
+
+# ── 받다 만 흔적 ───────────────────────────────────────────
+#
+# 같은 영상을 두 작업이 동시에 받다가 서로의 조각 파일을 지워 둘 다 죽은 적이
+# 있다. 이제 받기는 작업 폴더에서 하므로 조각이 에셋 폴더에 남지 않고,
+# 예전에 끊겨 남은 것은 지운다.
+
+
+def test_받다_만_조각을_지운다(tmp_path: Path) -> None:
+    for name in ("download.mp4.part", "download.f616.mp4.part-Frag588", "download.f616.mp4.ytdl"):
+        (tmp_path / name).write_bytes(b"x")
+    done = tmp_path / "download.mp4"
+    done.write_bytes(b"keep")
+
+    _clear_leftovers(tmp_path, "download")
+
+    assert done.exists(), "다 받은 파일은 남겨야 한다"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["download.mp4"]
+
+
+def test_받다_만_것을_완성본으로_고르지_않는다(tmp_path: Path) -> None:
+    (tmp_path / "download.mp4.part").write_bytes(b"x")
+    (tmp_path / "download.f616.mp4.ytdl").write_bytes(b"x")
+    assert _finished_file(tmp_path, "download") is None
+
+    (tmp_path / "download.mkv").write_bytes(b"ok")
+    assert _finished_file(tmp_path, "download").name == "download.mkv"
+
+
+def test_다른_에셋의_파일은_건드리지_않는다(tmp_path: Path) -> None:
+    keep = tmp_path / "source.mp4.part"
+    keep.write_bytes(b"x")
+    _clear_leftovers(tmp_path, "download")
+    assert keep.exists()
 
 
 # ── 에셋 ID ───────────────────────────────────────────────

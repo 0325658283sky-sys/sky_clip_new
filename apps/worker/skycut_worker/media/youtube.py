@@ -10,7 +10,9 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import secrets
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -121,26 +123,70 @@ def fetch_meta(url: str) -> YoutubeMeta:
     )
 
 
+#: 받는 중에만 쓰는 폴더. 프로세스마다 다른 이름이라 서로 건드리지 않는다.
+_WORK_PREFIX = ".work-"
+#: 받다 만 흔적. 예전 방식으로 받다 끊긴 것이 남아 있을 수 있다.
+_LEFTOVER_SUFFIXES = (".part", ".ytdl")
+
+
+def _clear_leftovers(folder: Path, stem: str) -> None:
+    """끊긴 다운로드가 남긴 조각을 지운다.
+
+    조각 파일은 더 이상 이어받기에 쓰이지 않는다(받기는 작업 폴더에서 하고
+    다 받은 것만 옮겨 온다). 1GB가 넘게 남아 있기도 해서 그냥 둘 수 없다.
+    """
+    for path in folder.glob(f"{stem}*"):
+        if path.is_file() and (
+            path.suffix in _LEFTOVER_SUFFIXES or ".part-Frag" in path.name
+        ):
+            path.unlink(missing_ok=True)
+
+
 def download(url: str, dst: Path, max_height: int = 1080) -> Path:
-    """영상을 내려받는다. 1080p를 넘지 않는 선에서 가장 좋은 화질."""
+    """영상을 내려받는다. 1080p를 넘지 않는 선에서 가장 좋은 화질.
+
+    **받는 동안에는 프로세스마다 다른 작업 폴더를 쓰고, 다 받은 뒤에 제자리로
+    옮긴다.** 같은 영상을 두 작업이 동시에 받으면 yt-dlp가 서로의 조각 파일
+    (`...part-Frag588`)을 지우고 찾다가 둘 다 죽는다. 실제로 그렇게 됐다.
+    """
     require_yt_dlp()
     dst.parent.mkdir(parents=True, exist_ok=True)
-    proc = subprocess.run(
-        [
-            "yt-dlp", "--no-warnings", "--no-playlist",
-            "-f", f"bestvideo[height<={max_height}]+bestaudio/best[height<={max_height}]/best",
-            "--merge-output-format", "mp4",
-            "-o", str(dst),
-            url,
-        ],
-        capture_output=True,
-    )
-    if proc.returncode != 0:
-        raise _classify(proc.stderr.decode("utf-8", "replace"))
-    if not dst.exists():
-        # 확장자가 바뀌어 저장되는 경우가 있다
-        found = next(iter(sorted(dst.parent.glob(f"{dst.stem}.*"))), None)
-        if found is None:
+    _clear_leftovers(dst.parent, dst.stem)
+
+    work = dst.parent / f"{_WORK_PREFIX}{os.getpid()}-{secrets.token_hex(4)}"
+    work.mkdir(parents=True, exist_ok=True)
+    try:
+        target = work / dst.name
+        proc = subprocess.run(
+            [
+                "yt-dlp", "--no-warnings", "--no-playlist",
+                "-f", f"bestvideo[height<={max_height}]+bestaudio/best[height<={max_height}]/best",
+                "--merge-output-format", "mp4",
+                "-o", str(target),
+                url,
+            ],
+            capture_output=True,
+        )
+        if proc.returncode != 0:
+            raise _classify(proc.stderr.decode("utf-8", "replace"))
+
+        got = target if target.exists() else _finished_file(work, dst.stem)
+        if got is None:
             raise YoutubeError("unknown", "영상을 받았지만 파일을 찾을 수 없어요.")
-        return found
-    return dst
+
+        # 같은 폴더 안이라 이동은 원자적이다. 반쯤 쓰인 파일이 보이지 않는다.
+        final = dst.with_suffix(got.suffix)
+        os.replace(got, final)
+        return final
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
+def _finished_file(folder: Path, stem: str) -> Path | None:
+    """확장자가 바뀌어 저장되는 경우가 있다. 받다 만 것은 고르지 않는다."""
+    done = [
+        p
+        for p in sorted(folder.glob(f"{stem}.*"))
+        if p.is_file() and p.suffix not in _LEFTOVER_SUFFIXES and ".part-Frag" not in p.name
+    ]
+    return done[0] if done else None

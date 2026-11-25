@@ -90,6 +90,18 @@ export function buildServer(): { app: FastifyInstance; queue: JobQueue; store: J
       return reply.code(400).send({ error: '사용 권리 확인에 동의해야 시작할 수 있어요.' });
     }
 
+    // 같은 주소를 두 번 보내면 돌고 있는 작업을 돌려준다. 두 번 받으면
+    // 같은 에셋 폴더를 두 프로세스가 건드려 둘 다 실패한다.
+    const running = store
+      .list()
+      .find(
+        (j) =>
+          j.kind === 'analyze' &&
+          (j.state === 'queued' || j.state === 'running') &&
+          (j.input as { source?: unknown }).source === source,
+      );
+    if (running) return reply.code(202).send(publicJob(running));
+
     const job = queue.add('analyze', {
       projectId: newProjectId(),
       source,
