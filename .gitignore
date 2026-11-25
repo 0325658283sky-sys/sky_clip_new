@@ -1,0 +1,14 @@
+node_modules/
+dist/
+out/
+.roundtrip/
+
+# fixtures에서 매번 다시 만드는 렌더러 입력 (npm run studio / render:all이 생성)
+apps/renderer/src/samples.generated.json
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.local
+.DS_Store
+*.log

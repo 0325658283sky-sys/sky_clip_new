@@ -1,0 +1,34 @@
+{
+  "name": "skycut",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/renderer"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build:schema": "npm run build -w @skycut/schema",
+    "schema:json": "npm run emit -w @skycut/schema",
+    "schema:python": "python tools/gen_pydantic.py",
+    "schema:check": "node tools/check-generated.mjs",
+    "test": "vitest run",
+    "fixtures": "tsx tools/make-fixtures.ts",
+    "render:all": "tsx apps/renderer/scripts/render-all.ts",
+    "samples": "tsx apps/renderer/scripts/build-samples.ts",
+    "studio": "npm run samples && remotion studio apps/renderer/src/index.ts",
+    "verify:roundtrip": "tsx tools/roundtrip-check.ts",
+    "verify:output": "tsx tools/verify-output.ts",
+    "verify:preview": "tsx tools/compare-preview-export.ts",
+    "gate": "tsx tools/gate.ts"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "5.1.0"
+  }
+}

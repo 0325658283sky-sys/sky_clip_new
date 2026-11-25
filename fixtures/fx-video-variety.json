@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "id": "fx-video-variety",
+  "createdAt": "2026-11-25T00:00:00Z",
+  "input": {
+    "kind": "youtube",
+    "url": "https://www.youtube.com/watch?v=EXAMPLE2",
+    "rightsAttested": true,
+    "attestedAt": "2026-11-25T00:00:00Z"
+  },
+  "sourceAssetId": "src-variety",
+  "assets": {
+    "src-variety": {
+      "id": "src-variety",
+      "kind": "video",
+      "variants": {},
+      "width": 1920,
+      "height": 1080,
+      "placeholder": {
+        "kind": "talk_scene",
+        "palette": [
+          "#e3b3bd",
+          "#9b5f6c",
+          "#2e2e3a",
+          "#d98f2b",
+          "#f3cdb0"
+        ],
+        "label": "원본 영상 16:9 (자리 표시)"
+      }
+    }
+  },
+  "transcript": {
+    "words": [
+      {
+        "id": "w0",
+        "text": "어",
+        "startMs": 61000,
+        "endMs": 61200,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w1",
+        "text": "잠깐만요",
+        "startMs": 61260,
+        "endMs": 61760,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w2",
+        "text": "어",
+        "startMs": 61820,
+        "endMs": 62020,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w3",
+        "text": "그러니까",
+        "startMs": 62080,
+        "endMs": 62580,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w4",
+        "text": "규칙에",
+        "startMs": 62640,
+        "endMs": 63015,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w5",
+        "text": "그런",
+        "startMs": 63075,
+        "endMs": 63325,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w6",
+        "text": "말은",
+        "startMs": 63385,
+        "endMs": 63635,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w7",
+        "text": "없었잖아요",
+        "startMs": 63695,
+        "endMs": 64320,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w8",
+        "text": "음",
+        "startMs": 64380,
+        "endMs": 64580,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w9",
+        "text": "저는",
+        "startMs": 64640,
+        "endMs": 64890,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w10",
+        "text": "분명히",
+        "startMs": 64950,
+        "endMs": 65325,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w11",
+        "text": "한",
+        "startMs": 65385,
+        "endMs": 65585,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w12",
+        "text": "번만",
+        "startMs": 65645,
+        "endMs": 65895,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w13",
+        "text": "바꾼다고",
+        "startMs": 65955,
+        "endMs": 66455,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w14",
+        "text": "들었는데",
+        "startMs": 66515,
+        "endMs": 67015,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w15",
+        "text": "그러면",
+        "startMs": 67075,
+        "endMs": 67450,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w16",
+        "text": "형이",
+        "startMs": 67510,
+        "endMs": 67760,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w17",
+        "text": "아까",
+        "startMs": 67820,
+        "endMs": 68070,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w18",
+        "text": "두",
+        "startMs": 68130,
+        "endMs": 68330,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w19",
+        "text": "번",
+        "startMs": 68390,
+        "endMs": 68590,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w20",
+        "text": "바꾼",
+        "startMs": 68650,
+        "endMs": 68900,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w21",
+        "text": "건",
+        "startMs": 68960,
+        "endMs": 69160,
+        "speakerId": "s1"
+      },
+      {
+        "id": "w22",
+        "text": "뭔데요",
+        "startMs": 69220,
+        "endMs": 69595,
+        "speakerId": "s1"
+      }
+    ],
+    "sentences": []
+  },
+  "clips": [
+    {
+      "id": "c1",
+      "content": {
+        "kind": "video_excerpt",
+        "range": {
+          "startWordId": "w0",
+          "endWordId": "w22"
+        },
+        "scenes": [],
+        "titles": [
+          {
+            "line1": "형 이건 좀",
+            "line2": "선 넘었다",
+            "keywordSpan": {
+              "start": 0,
+              "end": 4
+            }
+          },
+          {
+            "line1": "막내의",
+            "line2": "규칙 반격",
+            "keywordSpan": {
+              "start": 0,
+              "end": 5
+            }
+          },
+          {
+            "line1": "벌칙 피하려다",
+            "line2": "역관광",
+            "keywordSpan": {
+              "start": 0,
+              "end": 3
+            }
+          }
+        ],
+        "bottomCard": {
+          "kind": "real_comment",
+          "text": "막내가 제일 똑똑한 듯 ㅋㅋㅋ",
+          "authorMasked": "시청자 ○○○"
+        },
+        "effectMoments": [
+          {
+            "anchorWordId": "w8",
+            "text": "ㅋㅋㅋ"
+          },
+          {
+            "anchorWordId": "w20",
+            "text": "헉"
+          }
+        ],
+        "autoEdit": {
+          "fillerWordIds": [
+            "w0",
+            "w2",
+            "w3",
+            "w8"
+          ],
+          "silenceRangesMs": []
+        },
+        "score": {
+          "total": 4.1,
+          "hook": 4.4,
+          "standalone": 3.9,
+          "ending": 4.2,
+          "value": 3.9
+        },
+        "reason": "웃음이 터지는 반응까지 포함해서 끝맺음이 살아 있다.",
+        "credit": {
+          "channelName": "예시 채널",
+          "videoTitle": "주말 예능 EP.21"
+        }
+      },
+      "appliedTemplateId": "a-black",
+      "selectedTitleIndex": 0,
+      "overrides": {
+        "content": {
+          "cuts": [],
+          "keepWordIds": [],
+          "captionText": {},
+          "extraEffectMoments": []
+        },
+        "style": {},
+        "keepStyleOnTemplateChange": false
+      },
+      "generated": []
+    }
+  ],
+  "provenance": {
+    "llmModel": "fixture",
+    "promptVersion": "m0-hand"
+  }
+}
