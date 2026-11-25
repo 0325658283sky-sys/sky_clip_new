@@ -26,10 +26,12 @@ from .cost import CostReport
 from .evaluation import promote_baseline, run_eval, write_result, write_template
 from .highlight import StubLlm, extract_highlights
 from .highlight.llm import AnthropicLlm, LlmClient
-from .media import MediaStore
+from .blog import BlogFetchError
+from .media import MediaStore, video_id_from_url
 from .media.ingest import ingest as ingest_media
 from .media.youtube import YoutubeError
-from .run import run_pipeline
+from .run import run_blog_pipeline, run_pipeline
+from .tts import DEFAULT_PROVIDER as DEFAULT_TTS, PROVIDERS as TTS_PROVIDERS
 from .stt import DEFAULT_ENGINE, ENGINES, evaluate_engine, get_transcriber, write_comparison
 from .transcript import TranscriptView
 
@@ -77,6 +79,15 @@ def cmd_ingest(args: argparse.Namespace) -> int:
 # ── run (전체 연결) ────────────────────────────────────────
 
 
+def _looks_like_blog(source: str) -> bool:
+    """유튜브도 아니고 로컬 파일도 아닌 http(s) 주소면 블로그 글로 본다."""
+    if video_id_from_url(source):
+        return False
+    if Path(source).exists():
+        return False
+    return source.lower().startswith(("http://", "https://"))
+
+
 def cmd_run(args: argparse.Namespace) -> int:
     store = MediaStore(Path(args.store))
     cfg = _config_from_args(args)
@@ -91,18 +102,35 @@ def cmd_run(args: argparse.Namespace) -> int:
         )
 
     try:
-        result = run_pipeline(
-            args.source,
-            out,
-            store,
-            cfg,
-            stt_engine=args.engine,
-            rights_attested=bool(args.rights),
-            project_id=args.project_id,
-            use_comments=not args.no_comments,
-            on_progress=lambda m: print(m),
-        )
+        if _looks_like_blog(args.source):
+            print("블로그 글로 인식했어요.")
+            result = run_blog_pipeline(
+                args.source,
+                out,
+                store,
+                cfg,
+                tts_provider=args.tts,
+                rights_attested=bool(args.rights),
+                project_id=args.project_id,
+                max_shorts=args.max_clips,
+                on_progress=lambda m: print(m),
+            )
+        else:
+            result = run_pipeline(
+                args.source,
+                out,
+                store,
+                cfg,
+                stt_engine=args.engine,
+                rights_attested=bool(args.rights),
+                project_id=args.project_id,
+                use_comments=not args.no_comments,
+                on_progress=lambda m: print(m),
+            )
     except YoutubeError as exc:
+        print(f"{exc}  (사유: {exc.reason})", file=sys.stderr)
+        return 1
+    except BlogFetchError as exc:
         print(f"{exc}  (사유: {exc.reason})", file=sys.stderr)
         return 1
 
@@ -314,11 +342,12 @@ def build_parser() -> argparse.ArgumentParser:
     i.add_argument("--force", action="store_true", help="이미 만든 것도 다시 만든다")
     i.set_defaults(func=cmd_ingest)
 
-    r = sub.add_parser("run", help="입력 → 에셋 → 대본 → 하이라이트까지 한 번에")
-    r.add_argument("source", help="유튜브 URL 또는 로컬 영상 파일")
+    r = sub.add_parser("run", help="입력 → 쇼츠 설계까지 한 번에 (유튜브·MP4·블로그)")
+    r.add_argument("source", help="유튜브 URL · 로컬 영상 파일 · 블로그 글 주소")
     r.add_argument("--out", required=True, help="Project JSON 저장 경로")
     r.add_argument("--store", default=str(MEDIA_DIR))
-    r.add_argument("--engine", default=DEFAULT_ENGINE, choices=ENGINES)
+    r.add_argument("--engine", default=DEFAULT_ENGINE, choices=ENGINES, help="영상 입력의 STT")
+    r.add_argument("--tts", default=DEFAULT_TTS, choices=TTS_PROVIDERS, help="블로그 입력의 나레이션")
     r.add_argument("--project-id")
     r.add_argument("--rights", action="store_true", help="사용 권리를 확인했음")
     r.add_argument("--no-comments", action="store_true", help="유튜브 인기 댓글을 쓰지 않는다")

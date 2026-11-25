@@ -162,6 +162,84 @@ def candidate_to_clip(
     }
 
 
+def narrated_clip(
+    short: Any,
+    clip_id: str,
+    template_id: str,
+    credit: dict[str, str] | None,
+) -> dict[str, Any]:
+    """블로그 쇼츠 하나를 Clip으로 만든다 (`blog.pipeline.NarratedShort`).
+
+    장면 길이는 TTS가 돌려준 **실제 길이**를 쓴다. 추정값을 쓰면 자막이 어긋난다.
+    """
+    script = short.script
+
+    titles: list[dict[str, Any]] = []
+    for line1, line2, keyword in script.titles[:5]:
+        entry: dict[str, Any] = {"line1": line1[:40], "line2": line2[:40]}
+        span = _keyword_span(entry["line2"], keyword)
+        if span:
+            entry["keywordSpan"] = span
+        titles.append(entry)
+    if not titles:
+        titles = [{"line1": "", "line2": (script.scenes[0].narration if script.scenes else "")[:40]}]
+
+    scenes: list[dict[str, Any]] = []
+    generated: list[dict[str, Any]] = []
+    for i, scene in enumerate(script.scenes):
+        scene_id = short.scene_ids[i]
+        entry = {"id": scene_id, "narration": scene.narration}
+        if scene.image_url and getattr(scene, "image_asset_id", None):
+            entry["imageAssetId"] = scene.image_asset_id
+        if scene.text_card:
+            entry["textCard"] = scene.text_card[:60]
+        scenes.append(entry)
+
+        generated.append(
+            {
+                "kind": "tts",
+                "assetId": short.tts_asset_ids[i],
+                "cacheKey": short.tts_asset_ids[i].removeprefix("tts-"),
+                "sceneId": scene_id,
+                "wordTimings": [
+                    {"text": text, "startMs": start, "endMs": end}
+                    for text, start, end in short.scene_word_timings[i]
+                ],
+                "durationMs": short.scene_durations_ms[i],
+            }
+        )
+
+    content: dict[str, Any] = {
+        "kind": "narrated_story",
+        "scenes": scenes,
+        "titles": titles,
+        "effectMoments": [],
+        "autoEdit": {"fillerWordIds": [], "silenceRangesMs": []},
+        # 블로그 쇼츠는 사람이 고른 구간이 아니라 글 전체를 재구성한 것이라
+        # 하이라이트 점수 체계를 그대로 쓰지 않고 중립값을 둔다.
+        "score": {"total": 3.0, "hook": 3, "standalone": 3, "ending": 3, "value": 3},
+        "reason": "블로그 글을 나레이션 쇼츠로 재구성",
+    }
+    if script.question:
+        content["bottomCard"] = {"kind": "question", "text": script.question[:120]}
+    if credit:
+        content["credit"] = credit
+
+    return {
+        "id": clip_id,
+        "content": content,
+        "appliedTemplateId": template_id,
+        "selectedTitleIndex": 0,
+        "overrides": {
+            "content": {"cuts": [], "keepWordIds": [], "captionText": {}, "extraEffectMoments": []},
+            "style": {},
+            "keepStyleOnTemplateChange": False,
+        },
+        "generated": generated,
+        "narrationDurationMs": short.duration_ms,
+    }
+
+
 def attach_clips(
     project: dict[str, Any],
     view: TranscriptView,

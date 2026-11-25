@@ -47,10 +47,18 @@ class SttUsage:
 
 
 @dataclass
+class TtsUsage:
+    provider: str
+    characters: int = 0
+    usd: float = 0.0
+
+
+@dataclass
 class CostReport:
     project_id: str
     llm_calls: list[LlmCall] = field(default_factory=list)
     stt: SttUsage | None = None
+    tts: TtsUsage | None = None
 
     def add(self, call: LlmCall) -> None:
         self.llm_calls.append(call)
@@ -61,7 +69,7 @@ class CostReport:
 
     @property
     def total_usd(self) -> float:
-        return self.llm_usd + (self.stt.usd if self.stt else 0.0)
+        return self.llm_usd + (self.stt.usd if self.stt else 0.0) + (self.tts.usd if self.tts else 0.0)
 
     def summary(self) -> str:
         lines = [f"비용 — {self.project_id}"]
@@ -80,6 +88,8 @@ class CostReport:
             )
         if self.stt:
             lines.append(f"  {'STT':<14} {self.stt.engine} {self.stt.audio_seconds:.0f}s  ${self.stt.usd:.4f}")
+        if self.tts:
+            lines.append(f"  {'TTS':<14} {self.tts.provider} {self.tts.characters:,}자  ${self.tts.usd:.4f}")
         lines.append(f"  {'합계':<14} ${self.total_usd:.4f}")
         return "\n".join(lines)
 
@@ -89,6 +99,7 @@ class CostReport:
             "projectId": self.project_id,
             "llmCalls": [asdict(c) | {"usd": round(c.usd, 6)} for c in self.llm_calls],
             "stt": asdict(self.stt) if self.stt else None,
+            "tts": asdict(self.tts) if self.tts else None,
             "totalUsd": round(self.total_usd, 6),
         }
         path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

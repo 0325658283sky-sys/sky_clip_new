@@ -7,10 +7,14 @@
 - 테마 근거: [research/쇼츠_트렌드_조사.md](research/쇼츠_트렌드_조사.md)
 - 화면 기준: [SkyCut 목업](https://claude.ai/artifact/EiJSSYjaDesPGanT1k87iD)
 
-**현재 단계: M2 (영상 입력 전체 연결)** — M0(뼈대·테마), M1(하이라이트 엔진) 코드 완료
+**현재 단계: M3 (블로그 입력)** — M0(뼈대·테마), M1(하이라이트 엔진), M2(영상 연결) 코드 완료
 
 ```bash
 skycut-worker run "https://youtu.be/..." --out out/p.json --rights --genre 예능
+```
+
+```bash
+skycut-worker run "https://blog.naver.com/.../123" --out out/p.json --rights
 ```
 
 ```bash

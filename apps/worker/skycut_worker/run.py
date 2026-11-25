@@ -15,8 +15,10 @@ from pathlib import Path
 from typing import Any, Callable
 
 from . import project_io
+from urllib.parse import urlsplit
+
 from .comments import Comment, CommentsUnavailable, fetch_top_comments
-from .config import RunConfig
+from .config import PROMPT_VERSION, RunConfig
 from .cost import CostReport, SttUsage
 from .highlight import StubLlm, extract_highlights
 from .highlight.llm import AnthropicLlm, LlmClient
@@ -161,3 +163,94 @@ def run_pipeline(
 
 def meta_path_note(store: MediaStore, asset_id: str) -> Path:
     return store.paths(asset_id).path(META)
+
+
+# ── 블로그 ─────────────────────────────────────────────────
+
+
+def run_blog_pipeline(
+    url: str,
+    out_path: Path,
+    store: MediaStore,
+    cfg: RunConfig,
+    *,
+    tts_provider: str,
+    rights_attested: bool,
+    project_id: str | None = None,
+    max_shorts: int = 3,
+    on_progress: Progress | None = None,
+) -> RunResult:
+    """블로그 주소 → 나레이션 쇼츠가 든 Project JSON."""
+    from .blog import BlogStubLlm, build_shorts, record_cost
+    from .blog.pipeline import load_article
+    from .tts import get_synthesizer
+
+    say = on_progress or (lambda _: None)
+    stages: list[Stage] = []
+
+    def timed(name: str, fn: Callable[[], Any]) -> Any:
+        started = time.monotonic()
+        value = fn()
+        stages.append(Stage(name, time.monotonic() - started))
+        return value
+
+    report = CostReport(project_id=project_id or "blog")
+    synth = get_synthesizer(tts_provider)
+
+    # 글은 한 번만 받는다. 스텁 LLM도 같은 본문을 봐야 결과가 어긋나지 않는다.
+    loaded = timed("글 가져오기", lambda: load_article(url, say))
+    llm: LlmClient = BlogStubLlm(loaded[1]) if cfg.offline else AnthropicLlm(cfg, report)
+
+    result = timed(
+        "블로그",
+        lambda: build_shorts(
+            url, llm, synth, store, cfg, max_shorts=max_shorts, on_progress=say, loaded=loaded
+        ),
+    )
+    say(result.report())
+    record_cost(result, report, synth.name)
+
+    project = project_io.new_project(
+        project_id or _project_id_from(result.page.final_url),
+        "blog",
+        url,
+        rights_attested,
+    )
+    project["article"] = {
+        "title": result.article.title[:300],
+        **({"blogName": result.article.blog_name[:100]} if result.article.blog_name else {}),
+        **({"author": result.article.author[:100]} if result.article.author else {}),
+        "sections": [],
+    }
+    project["assets"] = result.assets
+
+    credit = {"channelName": result.article.blog_name or result.article.title[:100]}
+    template_id = project_io.pick_template(cfg.request.genre or "정보")
+    project["clips"] = [
+        project_io.narrated_clip(short, f"c{i + 1}", template_id, credit)
+        for i, short in enumerate(result.shorts)
+    ]
+    provenance = dict(project.get("provenance") or {})
+    provenance["llmModel"] = "offline-stub" if cfg.offline else cfg.model
+    provenance["promptVersion"] = PROMPT_VERSION
+    provenance["ttsProvider"] = synth.name
+    project["provenance"] = provenance
+
+    project_io.write_project(project, out_path)
+
+    return RunResult(
+        project=project,
+        project_path=out_path,
+        stages=stages,
+        cost=report,
+        media_seconds=sum(s.duration_ms for s in result.shorts) / 1000,
+        clips=len(result.shorts),
+    )
+
+
+def _project_id_from(url: str) -> str:
+    import hashlib
+    import re
+
+    host = re.sub(r"[^a-z0-9]+", "-", urlsplit(url).netloc.lower()).strip("-")[:24]
+    return f"blog-{host}-{hashlib.sha256(url.encode()).hexdigest()[:8]}"
