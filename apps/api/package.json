@@ -1,0 +1,21 @@
+{
+  "name": "@skycut/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "11.4.1",
+    "@fastify/multipart": "10.1.8",
+    "@fastify/static": "8.3.0",
+    "@remotion/bundler": "4.0.542",
+    "@remotion/renderer": "4.0.542",
+    "@skycut/core": "*",
+    "@skycut/schema": "*",
+    "@skycut/templates": "*",
+    "fastify": "5.12.8"
+  }
+}

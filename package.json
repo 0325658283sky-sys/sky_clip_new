@@ -5,7 +5,9 @@
   "type": "module",
   "workspaces": [
     "packages/*",
-    "apps/renderer"
+    "apps/renderer",
+    "apps/api",
+    "apps/web"
   ],
   "engines": {
     "node": ">=20"
@@ -24,12 +26,20 @@
     "verify:roundtrip": "tsx tools/roundtrip-check.ts",
     "verify:output": "tsx tools/verify-output.ts",
     "verify:preview": "tsx tools/compare-preview-export.ts",
-    "gate": "tsx tools/gate.ts"
+    "gate": "tsx tools/gate.ts",
+    "api": "npm run start -w @skycut/api",
+    "api:dev": "npm run dev -w @skycut/api",
+    "web": "npm run start -w @skycut/web",
+    "web:dev": "npm run dev -w @skycut/web",
+    "web:build": "npm run build -w @skycut/web",
+    "e2e:setup": "tsx tools/e2e-setup.ts",
+    "e2e": "playwright test"
   },
   "devDependencies": {
     "@types/node": "24.10.1",
     "tsx": "4.23.15",
     "typescript": "5.9.3",
-    "vitest": "5.1.0"
+    "vitest": "5.1.0",
+    "@playwright/test": "1.65.0"
   }
 }

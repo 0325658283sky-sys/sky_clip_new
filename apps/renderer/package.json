@@ -22,5 +22,11 @@
   "devDependencies": {
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0"
+  },
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./src/Short": "./src/Short.tsx",
+    "./src/*": "./src/*"
   }
 }

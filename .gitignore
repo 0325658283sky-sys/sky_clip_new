@@ -15,3 +15,8 @@ __pycache__/
 
 # 평가셋 실행 결과 (dataset.json과 baseline.json은 커밋한다)
 eval/results/
+
+# 종단 테스트 산출물
+test-results/
+playwright-report/
+e2e/fixtures/

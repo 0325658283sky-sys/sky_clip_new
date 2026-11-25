@@ -13,9 +13,18 @@ import { MediaBand } from './MediaBand.js';
 import { Overlays, TitleBlock } from './Overlays.js';
 import { Placeholder } from './Placeholder.js';
 
+/**
+ * 저장소 키 → 실제 주소.
+ *
+ * 서버 렌더는 Remotion의 공개 폴더에서 찾고(staticFile), 웹 미리보기는
+ * API가 내보내는 /media/ 를 쓴다. 컴포넌트는 어느 쪽인지 몰라도 된다.
+ */
+export type AssetUrlResolver = (storageKey: string) => string;
+
 export interface ShortProps {
   timeline: ResolvedTimeline;
   assets: Record<string, Asset>;
+  resolveAssetUrl?: AssetUrlResolver;
 }
 
 /** 배경: 단색이거나, 미디어를 크게 흐려 깐 것 */
@@ -42,7 +51,11 @@ const Background: React.FC<ShortProps> = ({ timeline, assets }) => {
  * 덕킹은 resolve()가 구간을 계산해 주고, 여기서는 그 구간에서 볼륨을 낮춘다.
  * M0 샘플에는 실제 음원 파일이 없어 아무것도 재생되지 않는다.
  */
-const AudioTracks: React.FC<ShortProps> = ({ timeline, assets }) => {
+const AudioTracks: React.FC<ShortProps & { resolveAssetUrl: AssetUrlResolver }> = ({
+  timeline,
+  assets,
+  resolveAssetUrl,
+}) => {
   const { fps } = useVideoConfig();
   return (
     <>
@@ -60,7 +73,7 @@ const AudioTracks: React.FC<ShortProps> = ({ timeline, assets }) => {
         return (
           <Sequence key={i} from={from} durationInFrames={duration} layout="none">
             <Audio
-              src={staticFile(file)}
+              src={resolveAssetUrl(file)}
               startFrom={msToFrame(track.sourceStartMs, fps)}
               volume={(f) => {
                 const atMs = (f / fps) * 1000 + track.outStartMs;
@@ -79,15 +92,16 @@ function dbToGain(db: number): number {
   return Math.min(1, Math.max(0, 10 ** (db / 20)));
 }
 
-export const Short: React.FC<ShortProps> = ({ timeline, assets }) => {
+export const Short: React.FC<ShortProps> = ({ timeline, assets, resolveAssetUrl }) => {
+  const toUrl = resolveAssetUrl ?? staticFile;
   return (
     <AbsoluteFill style={{ background: '#000000' }}>
       <Background timeline={timeline} assets={assets} />
-      <MediaBand timeline={timeline} assets={assets} />
+      <MediaBand timeline={timeline} assets={assets} resolveAssetUrl={toUrl} />
       <Captions timeline={timeline} />
       <TitleBlock timeline={timeline} />
       <Overlays timeline={timeline} />
-      <AudioTracks timeline={timeline} assets={assets} />
+      <AudioTracks timeline={timeline} assets={assets} resolveAssetUrl={toUrl} />
     </AbsoluteFill>
   );
 };

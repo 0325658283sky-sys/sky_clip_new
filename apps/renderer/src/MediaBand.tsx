@@ -7,14 +7,16 @@
 import type { Asset, MediaSegment, ResolvedTimeline } from '@skycut/schema';
 import { msToFrame } from '@skycut/core';
 import React from 'react';
-import { Img, OffthreadVideo, Sequence, interpolate, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
+import { Img, OffthreadVideo, Sequence, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
 import { Placeholder } from './Placeholder.js';
+import type { AssetUrlResolver } from './Short.js';
 import { rectStyle, textStyle } from './units.js';
 import { FONT_FAMILY } from './fonts.js';
 
 interface Props {
   timeline: ResolvedTimeline;
   assets: Record<string, Asset>;
+  resolveAssetUrl: AssetUrlResolver;
 }
 
 /** 강조 순간의 확대. 들어갔다 나오는 모양으로 보간한다. */
@@ -43,7 +45,8 @@ const SegmentContent: React.FC<{
   width: number;
   height: number;
   durationInFrames: number;
-}> = ({ segment, asset, width, height, durationInFrames }) => {
+  resolveAssetUrl: AssetUrlResolver;
+}> = ({ segment, asset, width, height, durationInFrames, resolveAssetUrl }) => {
   const frame = useCurrentFrame();
 
   const kb = segment.kenBurns;
@@ -84,10 +87,11 @@ const SegmentContent: React.FC<{
     }
     const file = asset.variants[segment.variant] ?? asset.variants.source ?? asset.variants.proxy;
     if (file) {
+      const fill = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' } as const;
       return asset.kind === 'video' ? (
-        <OffthreadVideo src={staticFile(file)} startFrom={0} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        <OffthreadVideo src={resolveAssetUrl(file)} startFrom={0} style={fill} />
       ) : (
-        <Img src={staticFile(file)} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        <Img src={resolveAssetUrl(file)} style={fill} />
       );
     }
     if (asset.placeholder) {
@@ -119,7 +123,7 @@ const SegmentContent: React.FC<{
   );
 };
 
-export const MediaBand: React.FC<Props> = ({ timeline, assets }) => {
+export const MediaBand: React.FC<Props> = ({ timeline, assets, resolveAssetUrl }) => {
   const { fps } = useVideoConfig();
   const frame = { width: timeline.width, height: timeline.height };
   const zoom = useZoomScale(timeline);
@@ -148,6 +152,7 @@ export const MediaBand: React.FC<Props> = ({ timeline, assets }) => {
               width={bandW}
               height={bandH}
               durationInFrames={duration}
+              resolveAssetUrl={resolveAssetUrl}
             />
           </Sequence>
         );

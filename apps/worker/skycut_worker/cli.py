@@ -30,6 +30,7 @@ from .blog import BlogFetchError
 from .media import MediaStore, video_id_from_url
 from .media.ingest import ingest as ingest_media
 from .media.youtube import YoutubeError
+from .progress import BLOG_STAGES, VIDEO_STAGES, ProgressReporter
 from .run import run_blog_pipeline, run_pipeline
 from .tts import DEFAULT_PROVIDER as DEFAULT_TTS, PROVIDERS as TTS_PROVIDERS
 from .stt import DEFAULT_ENGINE, ENGINES, evaluate_engine, get_transcriber, write_comparison
@@ -92,62 +93,67 @@ def cmd_run(args: argparse.Namespace) -> int:
     store = MediaStore(Path(args.store))
     cfg = _config_from_args(args)
     out = Path(args.out)
+    is_blog = _looks_like_blog(args.source)
 
-    if cfg.offline:
-        print("  (오프라인 모드 — LLM을 부르지 않습니다. 결과 품질은 의미 없습니다.)")
-    if not args.rights:
-        print(
-            "경고: --rights 없이 실행했습니다. 사용 권리를 확인했다는 기록이 남지 않습니다.",
-            file=sys.stderr,
-        )
+    reporter = ProgressReporter(BLOG_STAGES if is_blog else VIDEO_STAGES, json_mode=bool(args.json_progress))
+    say = reporter.as_callback()
+
+    if not args.json_progress:
+        if cfg.offline:
+            print("  (오프라인 모드 — LLM을 부르지 않습니다. 결과 품질은 의미 없습니다.)")
+        if not args.rights:
+            print(
+                "경고: --rights 없이 실행했습니다. 사용 권리를 확인했다는 기록이 남지 않습니다.",
+                file=sys.stderr,
+            )
+        if is_blog:
+            print("블로그 글로 인식했어요.")
 
     try:
-        if _looks_like_blog(args.source):
-            print("블로그 글로 인식했어요.")
+        if is_blog:
             result = run_blog_pipeline(
-                args.source,
-                out,
-                store,
-                cfg,
+                args.source, out, store, cfg,
                 tts_provider=args.tts,
                 rights_attested=bool(args.rights),
                 project_id=args.project_id,
                 max_shorts=args.max_clips,
-                on_progress=lambda m: print(m),
+                on_progress=say,
             )
         else:
             result = run_pipeline(
-                args.source,
-                out,
-                store,
-                cfg,
+                args.source, out, store, cfg,
                 stt_engine=args.engine,
                 rights_attested=bool(args.rights),
                 project_id=args.project_id,
                 use_comments=not args.no_comments,
-                on_progress=lambda m: print(m),
+                on_progress=say,
             )
-    except YoutubeError as exc:
-        print(f"{exc}  (사유: {exc.reason})", file=sys.stderr)
+    except (YoutubeError, BlogFetchError) as exc:
+        reporter.error(exc.reason, str(exc))
         return 1
-    except BlogFetchError as exc:
-        print(f"{exc}  (사유: {exc.reason})", file=sys.stderr)
+    except Exception as exc:
+        reporter.error("unknown", f"{type(exc).__name__}: {exc}")
         return 1
+
+    if result.clips == 0:
+        reporter.error("no_clips", "쓸 만한 구간을 찾지 못했어요.")
+        return 1
+
+    cost_path: Path | None = None
+    if result.cost and (result.cost.llm_calls or result.cost.stt or result.cost.tts):
+        cost_path = WORK_DIR / f"{result.project['id']}-cost.json"
+        result.cost.write(cost_path)
+
+    if args.json_progress:
+        reporter.done(str(out), result.clips)
+        return 0
 
     print()
     print(result.summary())
     print(f"  → {out}")
-
-    if result.cost and (result.cost.llm_calls or result.cost.stt):
+    if result.cost and cost_path:
         print(result.cost.summary())
-        cost_path = WORK_DIR / f"{result.project['id']}-cost.json"
-        result.cost.write(cost_path)
         print(f"  비용 기록 → {cost_path}")
-
-    if result.clips == 0:
-        print("쓸 만한 구간을 찾지 못했습니다.", file=sys.stderr)
-        return 1
-
     print("\n이제 렌더링할 수 있어요:")
     print(f"  npm run render:project -- {out}")
     return 0
@@ -351,6 +357,11 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--project-id")
     r.add_argument("--rights", action="store_true", help="사용 권리를 확인했음")
     r.add_argument("--no-comments", action="store_true", help="유튜브 인기 댓글을 쓰지 않는다")
+    r.add_argument(
+        "--json-progress",
+        action="store_true",
+        help="진행률을 JSON 한 줄씩 내보낸다 (API 서버가 읽는다)",
+    )
     add_extraction_opts(r)
     r.set_defaults(func=cmd_run)
 
