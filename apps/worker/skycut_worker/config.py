@@ -25,7 +25,7 @@ LLM_MODEL = os.getenv("SKYCUT_LLM_MODEL", "claude-opus-5-5")
 LLM_EFFORT = os.getenv("SKYCUT_LLM_EFFORT", "high")
 
 # 프롬프트를 바꾸면 반드시 올린다. 결과에 기록되어 회귀 평가의 기준이 된다.
-PROMPT_VERSION = "m1-2026-11-25"
+PROMPT_VERSION = "m1-2026-11-25b"
 
 
 @dataclass(frozen=True)
