@@ -33,7 +33,7 @@
     "web:dev": "npm run dev -w @skycut/web",
     "web:build": "npm run build -w @skycut/web",
     "e2e:setup": "tsx tools/e2e-setup.ts",
-    "e2e": "playwright test"
+    "e2e": "npm run web:build && playwright test"
   },
   "devDependencies": {
     "@types/node": "24.10.1",

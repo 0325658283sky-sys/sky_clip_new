@@ -1,12 +1,12 @@
 /**
- * API는 **같은 출처로 프록시**한다.
+ * API는 **같은 출처로 프록시**한다. 브라우저는 웹 서버 한 곳만 보므로
+ * CORS가 필요 없고, API를 바깥에 열지 않아도 된다.
  *
- * `NEXT_PUBLIC_*` 값은 빌드 시점에 번들에 박히므로, 한 번 빌드한 결과물을
- * 다른 포트의 API에 붙일 수 없다. rewrites는 서버가 뜰 때 읽으므로
- * 같은 빌드로 개발·테스트·운영 어디에나 붙일 수 있다.
- * 덤으로 브라우저는 한 출처만 보게 되어 CORS가 필요 없다.
+ * 프록시는 `rewrites`가 아니라 라우트 핸들러(`app/api/[...path]/route.ts`)로
+ * 한다. `rewrites`의 destination은 빌드 시점에 결과물에 박혀서, 한 번 빌드한
+ * 것을 다른 포트의 API에 붙일 수 없다. 라우트 핸들러는 요청마다
+ * `SKYCUT_API_ORIGIN`을 읽으므로 같은 빌드를 개발·테스트·운영에 다 쓴다.
  */
-const API_ORIGIN = process.env.SKYCUT_API_ORIGIN ?? 'http://127.0.0.1:4000';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -14,13 +14,9 @@ const nextConfig = {
   transpilePackages: ['@skycut/schema', '@skycut/core', '@skycut/templates', '@skycut/renderer'],
   typescript: { ignoreBuildErrors: false },
 
-  async rewrites() {
-    return [
-      { source: '/api/:path*', destination: `${API_ORIGIN}/api/:path*` },
-      { source: '/media/:path*', destination: `${API_ORIGIN}/media/:path*` },
-      { source: '/downloads/:path*', destination: `${API_ORIGIN}/downloads/:path*` },
-    ];
-  },
+  // 진행률(SSE)을 압축하면 버퍼에 쌓여 실시간이 아니게 된다. 운영에서는
+  // 앞단 프록시가 압축을 맡는다.
+  compress: false,
 
   // Next 16은 Turbopack이 기본이지만, 모노레포 패키지의 `./x.js` import를 풀려면
   // extensionAlias가 필요해 webpack으로 돌린다 (--webpack 플래그와 짝).

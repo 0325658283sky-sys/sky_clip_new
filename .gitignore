@@ -8,6 +8,10 @@ apps/renderer/src/samples.generated.json
 .venv/
 __pycache__/
 *.pyc
+*.egg-info/
+
+# Next.js 빌드 산출물
+.next/
 .env
 .env.local
 .DS_Store

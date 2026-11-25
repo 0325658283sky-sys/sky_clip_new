@@ -39,7 +39,7 @@ export default defineConfig({
       port: WEB_PORT,
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
-      // rewrites는 서버가 뜰 때 읽으므로 빌드를 다시 하지 않아도 된다
+      // 프록시가 요청마다 이 값을 읽으므로 빌드를 다시 하지 않아도 된다
       env: { SKYCUT_API_ORIGIN: `http://127.0.0.1:${API_PORT}` },
     },
   ],

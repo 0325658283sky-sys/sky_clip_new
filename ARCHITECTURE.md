@@ -70,10 +70,27 @@ packages/core       resolve(), 시간 매핑, 자막 줄나눔, 레이아웃 계
 packages/templates  테마 A·B TemplateSpec
 apps/renderer       Remotion 컴포지션 + 렌더 스크립트
 apps/worker         (M1~) Python 분석 CLI
+apps/api            (M4) Fastify REST + SSE + 작업 큐, 워커·렌더러를 띄운다
+apps/web            (M4) Next.js 초심자 화면 (입력 → 진행 → 결과)
 fixtures/           손으로 만든 샘플 Project JSON
+e2e/                Playwright 종단 테스트
 ```
 
-의존 방향: `templates → schema`, `core → schema`, `renderer → core, templates, schema`. 역방향 금지.
+의존 방향: `templates → schema`, `core → schema`, `renderer → core, templates, schema`,
+`api → schema, templates`, `web → core, templates, schema, renderer`. 역방향 금지.
+
+### 웹 ↔ API
+
+브라우저는 **웹 서버 한 곳만** 본다. `/api`, `/media`, `/downloads`는 웹이
+API로 넘긴다(`apps/web/app/*/[...path]/route.ts`). CORS가 필요 없고 API를
+바깥에 열지 않아도 된다.
+
+`next.config.mjs`의 `rewrites`로는 하지 않는다 — destination이 빌드 시점에
+`.next/routes-manifest.json`에 박혀서 한 번 빌드한 결과물을 다른 포트의 API에
+붙일 수 없다. 라우트 핸들러는 요청마다 `SKYCUT_API_ORIGIN`을 읽는다.
+
+진행률은 SSE로 보내므로 그 길에서는 **압축을 끈다**(`compress: false`).
+압축하면 이벤트가 버퍼에 쌓여 실시간이 아니게 된다.
 
 ---
 
@@ -127,4 +144,18 @@ npm test                  # core 단위 테스트
 npm run fixtures          # 샘플 Project JSON 생성
 npm run render:all        # 샘플 × 테마 2종 MP4 렌더링 → out/
 npm run studio            # Remotion Studio
+npm run gate              # M0 자동 검증
+
+# M4 — 서버와 화면 (키가 없으면 SKYCUT_OFFLINE=1 로 흐름만 확인)
+npm run api:dev           # API (기본 127.0.0.1:4000)
+npm run web:dev           # 웹 (기본 3000) — SKYCUT_API_ORIGIN 로 API 주소 지정
+npm run e2e:setup         # 종단 테스트용 샘플 영상·블로그 생성 (ffmpeg 필요)
+npm run e2e               # Playwright 종단 테스트 (API·웹을 직접 띄운다)
+```
+
+종단 테스트의 블로그 입력을 쓰려면 샘플 글을 띄우고 주소를 알려 준다:
+
+```bash
+.venv/Scripts/python -m http.server 8732 --directory e2e/fixtures/site
+E2E_BLOG_BASE=http://127.0.0.1:8732 npm run e2e
 ```

@@ -1,6 +1,6 @@
 import { createWriteStream, existsSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
@@ -58,7 +58,17 @@ export function buildServer(): { app: FastifyInstance; queue: JobQueue; store: J
   void app.register(cors, { origin: true });
   void app.register(multipart, { limits: { fileSize: MAX_UPLOAD_BYTES } });
   void app.register(fastifyStatic, { root: MEDIA_DIR, prefix: '/media/', decorateReply: false });
-  void app.register(fastifyStatic, { root: DOWNLOAD_DIR, prefix: '/downloads/', decorateReply: true });
+  void app.register(fastifyStatic, {
+    root: DOWNLOAD_DIR,
+    prefix: '/downloads/',
+    decorateReply: true,
+    // 완성된 쇼츠는 탭에서 재생되지 않고 바로 저장돼야 한다. 썸네일은 그대로 보여 준다.
+    setHeaders(res, path) {
+      if (path.endsWith('.mp4')) {
+        res.setHeader('Content-Disposition', `attachment; filename="${basename(path)}"`);
+      }
+    },
+  });
 
   app.get('/api/health', async () => ({
     ok: true,

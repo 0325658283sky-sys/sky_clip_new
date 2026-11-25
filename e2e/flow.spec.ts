@@ -71,16 +71,36 @@ test.describe('초심자 흐름', () => {
   });
 
   test('테마 교체가 100ms 안에 반영된다', async ({ page }) => {
-    test.skip(!process.env.E2E_PROJECT_ID, 'E2E_PROJECT_ID 가 없습니다');
+    test.skip(!process.env.E2E_BLOG_BASE, 'E2E_BLOG_BASE 가 없습니다 (npm run e2e:setup)');
+    test.setTimeout(ANALYZE_TIMEOUT);
 
-    await page.goto(`/projects/${process.env.E2E_PROJECT_ID}`);
-    await expect(page.locator('video').first()).toBeVisible({ timeout: 30_000 });
+    // 테마 교체는 입력 종류와 무관하게 같은 경로다. 가장 빠른 블로그로 만든다.
+    if (process.env.E2E_PROJECT_ID) {
+      await page.goto(`/projects/${process.env.E2E_PROJECT_ID}`);
+    } else {
+      await page.goto('/');
+      await page.locator('#source').fill(BLOG_URL);
+      await page.locator('#rights').check();
+      await page.getByRole('button', { name: '쇼츠 만들기' }).click();
+      await page.waitForURL(/\/projects\//, { timeout: ANALYZE_TIMEOUT });
+    }
 
-    const worst = await page.evaluate(async () => {
+    // 미리보기가 붙은 뒤에 재야 한다. 나레이션 쇼츠에는 video 요소가 없으므로
+    // 어느 입력에서나 뜨는 테마 버튼과 미리보기 틀을 기준으로 삼는다.
+    await expect(page.getByRole('button', { name: '게시물 화이트' }).first()).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.locator('.preview-frame').first()).toBeVisible();
+    // 글꼴이 아직 받아지는 중이면 첫 클릭에 그 비용이 섞인다. 재는 것은
+    // 미리보기가 처음 뜨는 시간이 아니라 **테마를 바꾸는** 시간이다.
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+    await page.waitForTimeout(200);
+
+    const times = await page.evaluate(async () => {
       const buttons = [...document.querySelectorAll('button')].filter((b) =>
         /예능 블랙|게시물 화이트/.test(b.textContent ?? ''),
       );
-      const times: number[] = [];
+      const measured: number[] = [];
       for (let i = 0; i < 6; i++) {
         const target = buttons.find((b) => b.getAttribute('aria-pressed') !== 'true');
         if (!target) break;
@@ -89,12 +109,13 @@ test.describe('초심자 흐름', () => {
         await new Promise((resolve) =>
           requestAnimationFrame(() => requestAnimationFrame(() => resolve(null))),
         );
-        times.push(performance.now() - started);
+        measured.push(Math.round(performance.now() - started));
       }
-      return Math.max(...times);
+      return measured;
     });
 
-    expect(worst).toBeLessThan(100);
+    expect(times.length).toBeGreaterThan(0);
+    expect(Math.max(...times), `교체 지연(ms): ${times.join(', ')}`).toBeLessThan(100);
   });
 });
 
