@@ -15,6 +15,8 @@ SCHEMA_GENERATED = ROOT / "packages" / "schema" / "generated"
 FIXTURES = ROOT / "fixtures"
 EVAL_DIR = ROOT / "eval"
 WORK_DIR = ROOT / "out" / "worker"
+#: 에셋 저장소. 렌더러가 staticFile로 찾는 공개 폴더이기도 하다.
+MEDIA_DIR = ROOT / "out" / "media"
 
 load_dotenv(ROOT / ".env")
 

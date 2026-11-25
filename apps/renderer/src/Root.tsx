@@ -19,9 +19,33 @@ interface Sample {
 
 const SAMPLES = samples as unknown as Sample[];
 
+/**
+ * 워커가 만든 임의의 Project를 렌더링하기 위한 범용 컴포지션.
+ * 크기·길이·내용은 렌더 시점에 inputProps로 덮어쓴다
+ * (apps/renderer/scripts/render-project.ts 참고).
+ */
+const GENERIC_ID = 'Clip';
+const fallback = SAMPLES[0];
+
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      {fallback ? (
+        <Composition
+          id={GENERIC_ID}
+          component={ShortComponent}
+          durationInFrames={fallback.timeline.durationInFrames}
+          fps={fallback.timeline.fps}
+          width={fallback.timeline.width}
+          height={fallback.timeline.height}
+          defaultProps={
+            { timeline: fallback.timeline, assets: fallback.assets } satisfies ShortProps as unknown as Record<
+              string,
+              unknown
+            >
+          }
+        />
+      ) : null}
       {SAMPLES.map((s) => (
         <Composition
           key={s.id}

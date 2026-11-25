@@ -11,12 +11,17 @@ from .base import SttNotConfigured, Transcriber, TranscriptResult, make_words
 from .compare import EngineReport, evaluate_engine, word_error_rate, write_comparison
 from .fixture import FixtureTranscriber
 
-ENGINES = ("elevenlabs", "deepgram", "fixture")
+#: stub은 실제로 받아쓰지 않는다. 키 없이 전체 흐름을 확인할 때만 쓴다.
+ENGINES = ("elevenlabs", "deepgram", "fixture", "stub")
 
 DEFAULT_ENGINE = os.getenv("SKYCUT_STT_ENGINE", "elevenlabs")
 
 
 def get_transcriber(name: str, *, project_path: Path | None = None) -> Transcriber:
+    if name == "stub":
+        from .stub import StubTranscriber
+
+        return StubTranscriber()
     if name == "fixture":
         if project_path is None:
             raise SttNotConfigured("fixture 공급자는 --from-project 로 Project JSON을 받아야 합니다.")

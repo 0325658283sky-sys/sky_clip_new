@@ -18,6 +18,7 @@
     "test": "vitest run",
     "fixtures": "tsx tools/make-fixtures.ts",
     "render:all": "tsx apps/renderer/scripts/render-all.ts",
+    "render:project": "tsx apps/renderer/scripts/render-project.ts",
     "samples": "tsx apps/renderer/scripts/build-samples.ts",
     "studio": "npm run samples && remotion studio apps/renderer/src/index.ts",
     "verify:roundtrip": "tsx tools/roundtrip-check.ts",

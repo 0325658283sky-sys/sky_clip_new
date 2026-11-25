@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from .autoedit import detect as detect_autoedit
+from .comments import Comment
 from .config import PROMPT_VERSION, ExtractionRequest, RunConfig
 from .highlight.types import Candidate
 from .korean import looks_like_sentence_end
@@ -93,6 +94,7 @@ def candidate_to_clip(
     clip_id: str,
     template_id: str,
     credit: dict[str, str] | None,
+    comment: Comment | None = None,
 ) -> dict[str, Any]:
     auto = detect_autoedit(view, cand.start_idx, cand.end_idx)
 
@@ -133,7 +135,15 @@ def candidate_to_clip(
         },
         "reason": cand.reason[:300],
     }
-    if cand.summary:
+    # 하단 카드는 실제 댓글이 있으면 그것을, 없으면 한줄 요약을 쓴다.
+    # AI가 지어낸 문장을 댓글처럼 보여 주지 않는다.
+    if comment:
+        content["bottomCard"] = {
+            "kind": "real_comment",
+            "text": comment.text[:120],
+            "authorMasked": comment.author_masked[:40],
+        }
+    elif cand.summary:
         content["bottomCard"] = {"kind": "summary", "text": cand.summary[:120]}
     if credit:
         content["credit"] = credit
@@ -158,14 +168,25 @@ def attach_clips(
     candidates: list[Candidate],
     cfg: RunConfig,
     stt_engine: str | None = None,
+    *,
+    credit: dict[str, str] | None = None,
+    comments: list[Comment] | None = None,
 ) -> dict[str, Any]:
     """하이라이트 결과를 프로젝트에 붙이고 스키마로 검증한다."""
-    credit = project.get("credit")
     template_id = pick_template(cfg.request.genre)
+    pool = list(comments or [])
 
     project = dict(project)
     project["clips"] = [
-        candidate_to_clip(view, cand, f"c{i + 1}", template_id, credit)
+        candidate_to_clip(
+            view,
+            cand,
+            f"c{i + 1}",
+            template_id,
+            credit,
+            # 클립마다 다른 댓글을 쓴다. 모자라면 한줄 요약으로 돌아간다.
+            pool[i] if i < len(pool) else None,
+        )
         for i, cand in enumerate(candidates)
     ]
     provenance = dict(project.get("provenance") or {})

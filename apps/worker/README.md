@@ -1,9 +1,23 @@
-# SkyCut 워커 (M1)
+# SkyCut 워커 (M1~M2)
 
-영상 → 대본 → **하이라이트 구간**까지. 결과는 Project JSON으로 나오고, 그대로 렌더러가 읽는다.
+유튜브 링크나 MP4 하나로 쇼츠 설계까지. 결과는 Project JSON으로 나오고, 그대로 렌더러가 읽는다.
 
 ```
-오디오 ──transcribe──▶ 대본 ──highlight──▶ 클립이 든 Project JSON ──▶ 렌더러(M0)
+유튜브 URL / MP4
+  ──ingest──▶ 에셋 (1080p 원본 · 480p 프록시 · 16kHz wav · 파형 · 썸네일)
+  ──transcribe──▶ 대본
+  ──highlight──▶ 클립이 든 Project JSON
+  ──▶ 렌더러(M0) ──▶ 1080p MP4
+```
+
+한 줄로:
+
+```bash
+skycut-worker run "https://youtu.be/..." --out out/p.json --rights --genre 예능
+```
+
+```bash
+npm run render:project -- out/p.json
 ```
 
 ---
@@ -41,7 +55,25 @@ DEEPGRAM_USD_PER_MINUTE=
 
 ---
 
+### 외부 도구
+
+`ingest`에는 **ffmpeg**와 (유튜브 입력이면) **yt-dlp**가 PATH에 있어야 한다.
+
+```bash
+yt-dlp --version && ffmpeg -version
+```
+
+---
+
 ## 명령
+
+```bash
+skycut-worker run "https://youtu.be/..." --out out/p.json --rights --genre 예능
+```
+
+```bash
+skycut-worker ingest sample.mp4
+```
 
 ```bash
 skycut-worker transcribe --audio sample.wav --out out/p.json --engine elevenlabs --rights
@@ -148,6 +180,35 @@ skycut-worker stt-compare --audio sample.wav --reference ref.txt --engines eleve
 | `elevenlabs` | REST 직접 호출. 요청·응답 모양을 공식 문서에서 확인함 |
 | `deepgram` | SDK 호출 경로와 응답 모양은 확인함. **`language`·`diarize`·`punctuate` 파라미터 이름은 미확인** — 거부되면 무엇을 고칠지 알려 주고 멈춘다 |
 | `fixture` | 이미 대본이 든 Project JSON에서 읽는다 (개발·테스트용) |
+| `stub` | **실제로 받아쓰지 않는다.** 오디오 길이에 맞춰 가짜 대본을 만든다. 키 없이 전체 흐름을 확인할 때만 |
+
+---
+
+## 에셋 저장소
+
+데이터에는 경로가 아니라 **assetId**만 들어간다. `variants` 값은 저장소 루트 기준 상대 경로라서, 로컬에서 S3로 옮겨도 Project JSON은 그대로다.
+
+```
+out/media/<assetId>/
+  source.mp4       최종 렌더용 (최대 1080p)
+  proxy.mp4        미리보기·분석용 480p
+  audio16k.wav     STT 입력
+  waveform.json    타임라인 파형
+  thumbs.jpg       타임라인 썸네일 스트립
+  meta.json        출처 (유튜브 채널·제목 등)
+```
+
+같은 영상을 두 번 넣으면 이미 만든 것을 다시 쓴다. 다시 만들려면 `--force`.
+
+렌더러는 이 폴더를 Remotion의 공개 폴더로 받아 `staticFile`로 찾는다.
+
+### 유튜브 실패 사유
+
+비공개, 연령 제한, 지역 차단, 라이브, 멤버십 전용, 자동 접근 차단, 길이 초과(2시간)를 구분해서 **사용자에게 그대로 보여 줄 수 있는 말**로 알려 준다.
+
+### 하단 카드와 댓글
+
+유튜브 원본이면 실제 인기 댓글을 가져와 하단 카드에 쓰고, **작성자 이름은 가린다**(`홍○○`). 댓글이 없거나 못 가져오면 AI가 쓴 한줄 요약 카드로 돌아간다. **AI가 지어낸 문장을 댓글인 것처럼 보여 주지 않는다.**
 
 ---
 

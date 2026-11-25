@@ -7,7 +7,15 @@
 - 테마 근거: [research/쇼츠_트렌드_조사.md](research/쇼츠_트렌드_조사.md)
 - 화면 기준: [SkyCut 목업](https://claude.ai/artifact/EiJSSYjaDesPGanT1k87iD)
 
-**현재 단계: M1 (하이라이트 엔진)** — M0(뼈대 + 테마 샘플) 완료
+**현재 단계: M2 (영상 입력 전체 연결)** — M0(뼈대·테마), M1(하이라이트 엔진) 코드 완료
+
+```bash
+skycut-worker run "https://youtu.be/..." --out out/p.json --rights --genre 예능
+```
+
+```bash
+npm run render:project -- out/p.json
+```
 
 ---
 
@@ -38,6 +46,10 @@ npm run fixtures         # 샘플 Project JSON 4개 생성 → fixtures/
 
 ```bash
 npm run render:all       # 샘플 × 테마 2종 MP4 + 썸네일 → out/
+```
+
+```bash
+npm run render:project -- out/p.json          # 워커가 만든 Project → out/shorts/
 ```
 
 ```bash
