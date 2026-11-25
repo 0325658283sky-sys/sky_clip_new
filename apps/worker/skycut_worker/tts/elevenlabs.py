@@ -1,4 +1,4 @@
-"""ElevenLabs TTS (대안 공급자).
+"""ElevenLabs TTS (기본 공급자).
 
 공식 문서에서 확인한 것
 (https://elevenlabs.io/docs/api-reference/text-to-speech/convert-with-timestamps):
@@ -9,8 +9,11 @@
                                        character_end_times_seconds[] } }
 
 **글자 단위 타임스탬프만 준다.** 자막에 쓰려면 공백을 경계로 어절로 묶어야 해서
-`group_characters_into_words`를 거친다. 문서에 한국어 지원 여부가 적혀 있지 않으니
-한국어 품질은 직접 들어 보고 판단한다.
+`group_characters_into_words`를 거친다. 한국어는 어절을 띄어 쓰므로 이 경계가
+그대로 맞고, 시각 값은 같은 정렬 결과에서 가져오니 묶는 과정에서 오차가 생기지 않는다.
+
+한국어(`ko`)는 `eleven_multilingual_v2` 지원 언어 목록에 들어 있다. 다만 억양이
+자연스러운지는 수치로 알 수 없으니 직접 들어 보고, 어색하면 `typecast`로 바꾼다.
 
 인증 헤더는 이 문서에 적혀 있지 않지만, 같은 API의 STT 문서에서 확인한
 `xi-api-key`를 쓴다.

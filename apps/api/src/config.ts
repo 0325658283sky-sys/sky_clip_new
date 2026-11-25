@@ -24,7 +24,7 @@ export const WORKER_DIR = join(ROOT, 'apps', 'worker');
 /** 키가 없을 때 스텁으로 돌릴지. 개발 중에만 켠다. */
 export const OFFLINE = process.env.SKYCUT_OFFLINE === '1';
 export const STT_ENGINE = process.env.SKYCUT_STT_ENGINE ?? (OFFLINE ? 'stub' : 'elevenlabs');
-export const TTS_PROVIDER = process.env.SKYCUT_TTS_PROVIDER ?? (OFFLINE ? 'stub' : 'typecast');
+export const TTS_PROVIDER = process.env.SKYCUT_TTS_PROVIDER ?? (OFFLINE ? 'stub' : 'elevenlabs');
 
 /** 동시에 돌릴 작업 수. 분석과 렌더 모두 CPU를 많이 쓴다. */
 export const CONCURRENCY = Number(process.env.SKYCUT_CONCURRENCY ?? 2);

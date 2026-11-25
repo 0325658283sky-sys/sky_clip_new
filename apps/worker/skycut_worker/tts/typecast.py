@@ -1,4 +1,4 @@
-"""Typecast TTS (한국어 기본 공급자).
+"""Typecast TTS (한국어 전용 대안).
 
 공식 문서에서 확인한 것
 (https://typecast.ai/docs/api-reference/text-to-speech/text-to-speech-with-timestamps):
@@ -11,6 +11,9 @@
 
 **단어 단위 타임스탬프를 그대로 준다.** 한국어는 language="KOR"이고
 ssfm-v31 / v30 / v21 세 모델 모두 지원한다고 표에 나와 있다.
+
+기본은 `elevenlabs`다. STT와 키를 같이 쓸 수 있어 계정이 하나로 끝나기 때문이다.
+여기는 한국어 전용이라 억양이 더 나을 수 있으니, 들어 보고 어색하면 바꿔 쓴다.
 """
 from __future__ import annotations
 

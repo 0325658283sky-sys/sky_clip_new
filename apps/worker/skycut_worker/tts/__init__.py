@@ -20,8 +20,8 @@ from .base import (
     spread_words,
 )
 
-PROVIDERS = ("typecast", "elevenlabs", "stub")
-DEFAULT_PROVIDER = os.getenv("SKYCUT_TTS_PROVIDER", "typecast")
+PROVIDERS = ("elevenlabs", "typecast", "stub")
+DEFAULT_PROVIDER = os.getenv("SKYCUT_TTS_PROVIDER", "elevenlabs")
 
 
 def get_synthesizer(name: str) -> Synthesizer:
