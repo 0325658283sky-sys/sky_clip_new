@@ -155,9 +155,9 @@ function ActiveClipPanel({
 
   // 테마 색상 (스와치용)
   const THEME_SWATCH: Record<string, { bg: string; border?: string }> = {
-    'yellow-sns': { bg: '#FFD600' },
-    'mz-black':   { bg: '#111111' },
-    'clean-card': { bg: '#ffffff', border: '#ccc' },
+    'a-black':  { bg: '#111111' },
+    'b-white':  { bg: '#ffffff', border: '#ccc' },
+    'c-yellow': { bg: '#FFD600' },
   };
 
   return (

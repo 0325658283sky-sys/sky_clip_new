@@ -23,9 +23,9 @@ const LENGTHS = [
 
 // 테마 스와치 색상
 const THEME_SWATCH: Record<string, string> = {
-  'yellow-sns': '#FFD600',
-  'mz-black':   '#111111',
-  'clean-card': '#e8e8e8',
+  'a-black': '#111111',
+  'b-white': '#e8e8e8',
+  'c-yellow': '#FFD600',
 };
 
 export default function InputPage() {
@@ -205,7 +205,7 @@ export default function InputPage() {
                 <div style={{
                   width: 32, height: 32, borderRadius: 8,
                   background: THEME_SWATCH[t.id] ?? '#888',
-                  border: t.id === 'clean-card' ? '1px solid #ccc' : 'none',
+                  border: t.id === 'b-white' ? '1px solid #ccc' : 'none',
                 }} />
                 <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--fg)' }}>{t.name}</span>
                 {t.description ? (
