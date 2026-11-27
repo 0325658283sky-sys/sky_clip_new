@@ -11,11 +11,11 @@ from .refine import starts_with_dangling_reference
 from .types import Candidate, Rejection
 
 #: 두 구간이 이만큼 겹치면 같은 내용으로 본다
-OVERLAP_IOU = 0.35
+OVERLAP_IOU = 0.25
 #: 짧은 쪽 기준으로 이만큼 겹치면 중복으로 본다.
 #: IoU만 보면 길이가 다른 두 구간이 크게 겹쳐도 통과한다 (긴 쪽이 분모를 키우기 때문).
 #: 경계를 문장에 맞추는 과정에서 구간이 서로 번지는 경우를 여기서 잡는다.
-OVERLAP_CONTAINMENT = 0.35
+OVERLAP_CONTAINMENT = 0.20
 #: 어절이 이만큼 같으면 중복으로 본다
 TEXT_SIMILARITY = 0.6
 
