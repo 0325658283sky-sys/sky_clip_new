@@ -14,17 +14,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
-          href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
       <body>
         <header className="topbar">
           <Link href="/" className="brand">
+            <div className="brand-mark">
+              <svg viewBox="0 0 20 20"><path d="M4 4l13 6-13 6V4z" /></svg>
+            </div>
             SkyCut
           </Link>
-          <nav className="row" style={{ fontSize: 14 }}>
-            <Link href="/" style={{ color: 'var(--accent-ink)', fontWeight: 500, textDecoration: 'none' }}>
+          <nav style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Link href="/" className="btn-quiet" style={{ textDecoration: 'none' }}>
               쇼츠 만들기
             </Link>
           </nav>
