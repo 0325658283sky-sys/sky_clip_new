@@ -1,26 +1,25 @@
 node_modules/
+.next/
 dist/
 out/
-.roundtrip/
+build/
 
-# fixtures에서 매번 다시 만드는 렌더러 입력 (npm run studio / render:all이 생성)
-apps/renderer/src/samples.generated.json
+.env
+.env.local
+.env*.local
+
+# 레퍼런스 수집물 — 로그인 화면에 계정 정보가 들어간다
+reference/
+
+# Playwright
+test-results/
+playwright-report/
+.playwright-profile/
+
 .venv/
 __pycache__/
 *.pyc
 *.egg-info/
 
-# Next.js 빌드 산출물
-.next/
-.env
-.env.local
 .DS_Store
 *.log
-
-# 평가셋 실행 결과 (dataset.json과 baseline.json은 커밋한다)
-eval/results/
-
-# 종단 테스트 산출물
-test-results/
-playwright-report/
-e2e/fixtures/
